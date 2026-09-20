@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Log in — Budget & Expenditure Approval{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-11 col-sm-8 col-md-5 col-lg-4">
+    <div class="card shadow-sm mt-5">
+      <div class="card-body p-4">
+        <div class="text-center mb-3">
+          <i class="bi bi-wallet2" style="font-size:2.5rem;color:#0d3b66;"></i>
+          <h4 class="mt-2 mb-0">Budget & Expenditure Approval</h4>
+          <small class="text-muted">Sign in to continue</small>
+        </div>
+        {% if form.errors %}
+          <div class="alert alert-danger py-2">Invalid username or password.</div>
+        {% endif %}
+        <form method="post">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            <input type="text" name="username" class="form-control" required autofocus>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <input type="password" name="password" class="form-control" required>
+          </div>
+          <input type="hidden" name="next" value="{{ next }}">
+          <button type="submit" class="btn btn-primary w-100">Log in</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

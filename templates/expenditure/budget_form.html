@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}New Budget Request{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-9 col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="mb-3">New Budget Request</h5>
+        <p class="text-muted small">Attach a vendor quotation and submit for Approver 1 &amp; Approver 2 sign-off before any payment can be made.</p>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Category</label>
+            {{ form.category }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            {{ form.title }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            {{ form.description }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Vendor name</label>
+            {{ form.vendor_name }}
+          </div>
+          <div class="row">
+            <div class="col-12 col-sm-6 mb-3">
+              <label class="form-label">Quotation amount ({{ currency_code }})</label>
+              {{ form.quotation_amount }}
+            </div>
+            <div class="col-12 col-sm-6 mb-3">
+              <label class="form-label">Quotation file</label>
+              {{ form.quotation_file }}
+            </div>
+          </div>
+          {% for field in form %}
+            {% for error in field.errors %}<div class="text-danger small">{{ field.label }}: {{ error }}</div>{% endfor %}
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">Submit for approval</button>
+          <a href="{% url 'budget_list' %}" class="btn btn-link">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

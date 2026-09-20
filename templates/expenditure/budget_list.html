@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}Budget Requests{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-center mb-3 gap-2">
+  <h4 class="mb-0">Budget Requests</h4>
+  {% if is_requester or is_admin %}
+  <a href="{% url 'budget_create' %}" class="btn btn-primary btn-sm"><i class="bi bi-plus-lg"></i> New budget request</a>
+  {% endif %}
+</div>
+
+<ul class="nav nav-pills mb-3 flex-wrap">
+  <li class="nav-item"><a class="nav-link {% if scope == 'all' %}active{% endif %}" href="?scope=all">All</a></li>
+  <li class="nav-item"><a class="nav-link {% if scope == 'mine' %}active{% endif %}" href="?scope=mine">My requests</a></li>
+  {% if is_approver1 or is_approver2 %}
+  <li class="nav-item"><a class="nav-link {% if scope == 'pending_me' %}active{% endif %}" href="?scope=pending_me">Pending my approval</a></li>
+  {% endif %}
+</ul>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Title</th>
+          <th>Category</th>
+          <th>Vendor</th>
+          <th>Quoted</th>
+          <th>Approved</th>
+          <th>Status</th>
+          <th>Requested by</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for br in budget_requests %}
+        <tr class="cursor-pointer" onclick="window.location='{% url 'budget_detail' br.pk %}'" style="cursor:pointer;">
+          <td>{{ br.title }}</td>
+          <td>{{ br.category.name }}</td>
+          <td>{{ br.vendor_name|default:"—" }}</td>
+          <td>{{ currency_code }} {{ br.quotation_amount|floatformat:2 }}</td>
+          <td>{% if br.approved_amount %}{{ currency_code }} {{ br.approved_amount|floatformat:2 }}{% else %}—{% endif %}</td>
+          <td>
+            {% if br.status == "APPROVED" %}<span class="badge bg-success badge-status">Approved</span>
+            {% elif br.status == "REJECTED" %}<span class="badge bg-danger badge-status">Rejected</span>
+            {% elif br.status == "PENDING_L1" %}<span class="badge bg-warning text-dark badge-status">Pending Approver 1</span>
+            {% else %}<span class="badge bg-info text-dark badge-status">Pending Approver 2</span>{% endif %}
+          </td>
+          <td>{{ br.requested_by.get_full_name|default:br.requested_by.username }}</td>
+          <td>{{ br.requested_date|date:"d M Y" }}</td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="8" class="text-center text-muted py-4">No budget requests found.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

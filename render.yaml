@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: budget-approval-app
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt && python manage.py collectstatic --noinput"
+    startCommand: "gunicorn config.wsgi:application"
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: ".onrender.com"
+      - key: DJANGO_TIME_ZONE
+        value: "Asia/Dubai"
+      - key: CURRENCY_CODE
+        value: "AED"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: budget-approval-db
+          property: connectionString
+    autoDeploy: true
+
+databases:
+  - name: budget-approval-db
+    plan: free

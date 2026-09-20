@@ -1,0 +1,48 @@
+:root {
+  --brand-dark: #0d3b66;
+  --brand-accent: #ee964b;
+}
+
+body {
+  background-color: #f4f6f9;
+}
+
+.app-navbar {
+  background-color: var(--brand-dark);
+}
+
+.stat-card {
+  border: none;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.stat-card .stat-value {
+  font-size: 1.6rem;
+  font-weight: 600;
+}
+
+.progress {
+  height: 0.6rem;
+  border-radius: 1rem;
+}
+
+.table-responsive {
+  border-radius: 0.5rem;
+  overflow: hidden;
+}
+
+.badge-status {
+  font-size: 0.75rem;
+  padding: 0.35em 0.6em;
+}
+
+@media (max-width: 576px) {
+  .stat-card .stat-value {
+    font-size: 1.3rem;
+  }
+  main.container-fluid {
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+  }
+}

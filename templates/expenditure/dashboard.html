@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load humanize %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="row g-3 mb-1">
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="text-muted small">Total Approved Budget</div>
+        <div class="stat-value">{{ currency_code }} {{ total_approved|floatformat:0|intcomma }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="text-muted small">Total Utilized</div>
+        <div class="stat-value">{{ currency_code }} {{ total_utilized|floatformat:0|intcomma }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="text-muted small">Remaining Balance</div>
+        <div class="stat-value">{{ currency_code }} {{ total_remaining|floatformat:0|intcomma }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-lg-3">
+    <div class="card stat-card h-100">
+      <div class="card-body">
+        <div class="text-muted small">My pending approvals</div>
+        <div class="stat-value">{{ my_pending_actions }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% if is_approver1 or is_approver2 or is_admin %}
+<div class="row g-3 mt-1 mb-1">
+  <div class="col-12">
+    <div class="card border-0" style="background:#eef2f7;">
+      <div class="card-body py-2 d-flex flex-wrap gap-3 align-items-center small">
+        <span><i class="bi bi-hourglass-split text-warning"></i> Budget requests pending Approver 1: <strong>{{ pending_budget_l1 }}</strong></span>
+        <span><i class="bi bi-hourglass-split text-info"></i> Budget requests pending Approver 2: <strong>{{ pending_budget_l2 }}</strong></span>
+        <span><i class="bi bi-hourglass-split text-warning"></i> Payments pending Approver 1: <strong>{{ pending_payment_l1 }}</strong></span>
+        <span><i class="bi bi-hourglass-split text-info"></i> Payments pending Approver 2: <strong>{{ pending_payment_l2 }}</strong></span>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="row g-3 mt-1">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="mb-3">Budget vs Utilized by Category</h6>
+        <canvas id="categoryChart" height="220" role="img" aria-label="Bar chart comparing approved budget and amount utilized for each expenditure category"></canvas>
+        <div class="visually-hidden">
+          <table>
+            <caption>Budget vs utilized by category</caption>
+            <thead><tr><th>Category</th><th>Approved</th><th>Utilized</th></tr></thead>
+            <tbody>
+              {% for row in category_rows %}<tr><td>{{ row.category.name }}</td><td>{{ row.approved }}</td><td>{{ row.utilized }}</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm h-100">
+      <div class="card-body">
+        <h6 class="mb-3">Category utilization</h6>
+        {% for row in category_rows %}
+        <div class="mb-3">
+          <div class="d-flex justify-content-between small">
+            <span>{{ row.category.name }}</span>
+            <span class="text-muted">{{ currency_code }} {{ row.utilized|floatformat:0 }} / {{ currency_code }} {{ row.approved|floatformat:0 }}</span>
+          </div>
+          <div class="progress">
+            <div class="progress-bar {% if row.percent >= 90 %}bg-danger{% elif row.percent >= 70 %}bg-warning{% else %}bg-success{% endif %}" style="width: {{ row.percent }}%;"></div>
+          </div>
+        </div>
+        {% empty %}
+        <p class="text-muted">No categories with approved budget yet.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-3 mt-1">
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0">Recent budget requests</h6>
+          <a href="{% url 'budget_list' %}" class="small">View all</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Title</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for br in recent_budgets %}
+              <tr><td><a href="{% url 'budget_detail' br.pk %}">{{ br.title }}</a></td><td>{{ br.get_status_display }}</td></tr>
+              {% empty %}<tr><td colspan="2" class="text-muted text-center py-3">Nothing yet.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-12 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+          <h6 class="mb-0">Recent payments</h6>
+          <a href="{% url 'payment_list' %}" class="small">View all</a>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-sm mb-0">
+            <thead><tr><th>Budget item</th><th>Status</th></tr></thead>
+            <tbody>
+              {% for p in recent_payments %}
+              <tr><td><a href="{% url 'payment_detail' p.pk %}">{{ p.budget_request.title }}</a></td><td>{{ p.get_status_display }}</td></tr>
+              {% empty %}<tr><td colspan="2" class="text-muted text-center py-3">Nothing yet.</td></tr>{% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const categoryLabels = [{% for row in category_rows %}"{{ row.category.name|escapejs }}",{% endfor %}];
+const approvedData = [{% for row in category_rows %}{{ row.approved|default:0 }},{% endfor %}];
+const utilizedData = [{% for row in category_rows %}{{ row.utilized|default:0 }},{% endfor %}];
+
+const ctx = document.getElementById('categoryChart');
+if (ctx && categoryLabels.length) {
+  new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: categoryLabels,
+      datasets: [
+        { label: 'Approved Budget', data: approvedData, backgroundColor: '#2a78d6', borderRadius: 4, maxBarThickness: 28 },
+        { label: 'Utilized', data: utilizedData, backgroundColor: '#eb6834', borderRadius: 4, maxBarThickness: 28 },
+      ],
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'bottom', labels: { color: '#52514e' } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: {{ currency_code }} ${c.parsed.y.toLocaleString()}` } },
+      },
+      scales: {
+        y: { beginAtZero: true, grid: { color: '#e1e0d9' }, ticks: { color: '#898781' } },
+        x: { grid: { display: false }, ticks: { color: '#898781' } },
+      },
+    },
+  });
+}
+</script>
+{% endblock %}

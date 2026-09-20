@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}{{ mode }} user{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-md-8 col-lg-6">
+    <div class="card shadow-sm">
+      <div class="card-body p-4">
+        <h5 class="mb-3">{{ mode }} user{% if target_user %}: {{ target_user.username }}{% endif %}</h5>
+        <form method="post">
+          {% csrf_token %}
+          {% if mode == "Create" %}
+          <div class="mb-3">
+            <label class="form-label">Username</label>
+            {{ form.username }}
+          </div>
+          {% endif %}
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label class="form-label">First name</label>
+              {{ form.first_name }}
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label">Last name</label>
+              {{ form.last_name }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Role</label>
+            {{ form.role }}
+            <div class="form-text">Requester creates expenditure items; Approver 1 &amp; Approver 2 approve budgets and payments in sequence; Administrator manages categories and users.</div>
+          </div>
+          <div class="row">
+            <div class="col-6 mb-3">
+              <label class="form-label">Department</label>
+              {{ form.department }}
+            </div>
+            <div class="col-6 mb-3">
+              <label class="form-label">Phone</label>
+              {{ form.phone }}
+            </div>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">{% if mode == "Create" %}Password{% else %}Reset password{% endif %}</label>
+            {% if mode == "Create" %}{{ form.password }}{% else %}{{ form.new_password }}{% endif %}
+          </div>
+          {% if mode == "Edit" %}
+          <div class="form-check mb-3">
+            {{ form.is_active }}
+            <label class="form-check-label" for="{{ form.is_active.id_for_label }}">Active (can log in)</label>
+          </div>
+          {% endif %}
+          {% for field in form %}
+            {% for error in field.errors %}<div class="text-danger small">{{ field.label }}: {{ error }}</div>{% endfor %}
+          {% endfor %}
+          <button type="submit" class="btn btn-primary">Save</button>
+          <a href="{% url 'user_list' %}" class="btn btn-link">Cancel</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "base.html" %}
+{% block title %}Payment {{ payment.pk }}{% endblock %}
+{% block content %}
+<div class="d-flex flex-wrap justify-content-between align-items-start mb-3 gap-2">
+  <div>
+    <h4 class="mb-1">Payment for: {{ payment.budget_request.title }}</h4>
+    <span class="text-muted">{{ payment.budget_request.category.name }}</span>
+  </div>
+  <div>
+    {% if payment.status == "APPROVED" %}<span class="badge bg-success fs-6">Released</span>
+    {% elif payment.status == "REJECTED" %}<span class="badge bg-danger fs-6">Rejected</span>
+    {% elif payment.status == "PENDING_L1" %}<span class="badge bg-warning text-dark fs-6">Pending Approver 1</span>
+    {% else %}<span class="badge bg-info text-dark fs-6">Pending Approver 2</span>{% endif %}
+  </div>
+</div>
+
+<div class="row g-3">
+  <div class="col-12 col-lg-7">
+    <div class="card shadow-sm mb-3">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Payment details</h6>
+        <dl class="row mb-0">
+          <dt class="col-5 col-sm-4">Amount</dt><dd class="col-7 col-sm-8 fw-semibold">{{ currency_code }} {{ payment.amount|floatformat:2 }}</dd>
+          <dt class="col-5 col-sm-4">Payee</dt><dd class="col-7 col-sm-8">{{ payment.payee|default:"—" }}</dd>
+          <dt class="col-5 col-sm-4">Invoice ref.</dt><dd class="col-7 col-sm-8">{{ payment.invoice_reference|default:"—" }}</dd>
+          <dt class="col-5 col-sm-4">Method</dt><dd class="col-7 col-sm-8">{{ payment.get_payment_method_display }}</dd>
+          <dt class="col-5 col-sm-4">Proof</dt>
+          <dd class="col-7 col-sm-8">{% if payment.proof_file %}<a href="{{ payment.proof_file.url }}" target="_blank"><i class="bi bi-paperclip"></i> View file</a>{% else %}<span class="text-muted">Not attached</span>{% endif %}</dd>
+          <dt class="col-5 col-sm-4">Remarks</dt><dd class="col-7 col-sm-8">{{ payment.remarks|default:"—" }}</dd>
+          <dt class="col-5 col-sm-4">Requested by</dt><dd class="col-7 col-sm-8">{{ payment.requested_by.get_full_name|default:payment.requested_by.username }} on {{ payment.requested_date|date:"d M Y H:i" }}</dd>
+          <dt class="col-5 col-sm-4">Against budget</dt><dd class="col-7 col-sm-8"><a href="{% url 'budget_detail' payment.budget_request.pk %}">{{ payment.budget_request.title }}</a> (approved {{ currency_code }} {{ payment.budget_request.approved_amount|floatformat:2 }})</dd>
+        </dl>
+      </div>
+    </div>
+
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h6 class="text-muted mb-3">Approval trail</h6>
+        <ul class="list-group list-group-flush">
+          <li class="list-group-item px-0">
+            <strong>Approver 1:</strong>
+            {% if payment.approver1 %}
+              {{ payment.approver1.get_full_name|default:payment.approver1.username }} —
+              {% if payment.status == "REJECTED" and not payment.approver2 %}<span class="text-danger">Rejected</span>{% else %}<span class="text-success">Approved</span>{% endif %}
+              on {{ payment.approver1_decision_at|date:"d M Y H:i" }}
+              {% if payment.approver1_comment %}<br><small class="text-muted">"{{ payment.approver1_comment }}"</small>{% endif %}
+            {% else %}<span class="text-muted">Awaiting decision</span>{% endif %}
+          </li>
+          <li class="list-group-item px-0">
+            <strong>Approver 2:</strong>
+            {% if payment.approver2 %}
+              {{ payment.approver2.get_full_name|default:payment.approver2.username }} —
+              {% if payment.status == "REJECTED" %}<span class="text-danger">Rejected</span>{% else %}<span class="text-success">Approved</span>{% endif %}
+              on {{ payment.approver2_decision_at|date:"d M Y H:i" }}
+              {% if payment.approver2_comment %}<br><small class="text-muted">"{{ payment.approver2_comment }}"</small>{% endif %}
+            {% else %}<span class="text-muted">Awaiting decision</span>{% endif %}
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-12 col-lg-5">
+    {% if can_act_l1 %}
+    <div class="card shadow-sm mb-3 border-warning">
+      <div class="card-body">
+        <h6 class="mb-3"><i class="bi bi-1-circle"></i> Approver 1 decision</h6>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="level1">
+          {% for choice in l1_form.decision %}
+            <div class="form-check form-check-inline">{{ choice.tag }} <label class="form-check-label">{{ choice.choice_label }}</label></div>
+          {% endfor %}
+          <div class="mt-2">
+            <label class="form-label small">Comment (optional)</label>
+            {{ l1_form.comment }}
+          </div>
+          <button type="submit" class="btn btn-warning mt-2 w-100">Submit decision</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if can_act_l2 %}
+    <div class="card shadow-sm mb-3 border-info">
+      <div class="card-body">
+        <h6 class="mb-3"><i class="bi bi-2-circle"></i> Approver 2 final decision</h6>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="action" value="level2">
+          {% for choice in l2_form.decision %}
+            <div class="form-check form-check-inline">{{ choice.tag }} <label class="form-check-label">{{ choice.choice_label }}</label></div>
+          {% endfor %}
+          <div class="mt-2">
+            <label class="form-label small">Comment (optional)</label>
+            {{ l2_form.comment }}
+          </div>
+          <button type="submit" class="btn btn-info mt-2 w-100">Submit decision (releases payment)</button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+    <a href="{% url 'payment_list' %}" class="btn btn-link">&larr; Back to list</a>
+  </div>
+</div>
+{% endblock %}

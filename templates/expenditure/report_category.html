@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}Budget vs Utilized by Category{% endblock %}
+{% block content %}
+<h4 class="mb-3">Total Budget Approved vs Utilized — by Category</h4>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <canvas id="reportChart" height="220" role="img" aria-label="Bar chart comparing approved budget and amount utilized for each expenditure category"></canvas>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="table-responsive">
+    <table class="table table-hover align-middle mb-0">
+      <thead class="table-light">
+        <tr>
+          <th>Category</th>
+          <th class="text-end">Approved Budget</th>
+          <th class="text-end">Utilized</th>
+          <th class="text-end">Remaining</th>
+          <th style="min-width:160px;">Utilization</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+        <tr>
+          <td>{{ row.category.name }}</td>
+          <td class="text-end">{{ currency_code }} {{ row.approved|floatformat:2 }}</td>
+          <td class="text-end">{{ currency_code }} {{ row.utilized|floatformat:2 }}</td>
+          <td class="text-end">{{ currency_code }} {{ row.remaining|floatformat:2 }}</td>
+          <td>
+            <div class="d-flex align-items-center gap-2">
+              <div class="progress flex-grow-1"><div class="progress-bar {% if row.percent >= 90 %}bg-danger{% elif row.percent >= 70 %}bg-warning{% else %}bg-success{% endif %}" style="width:{{ row.percent }}%"></div></div>
+              <span class="small text-muted">{{ row.percent }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% empty %}
+        <tr><td colspan="5" class="text-center text-muted py-4">No categories yet.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot class="table-light fw-semibold">
+        <tr>
+          <td>Total</td>
+          <td class="text-end">{{ currency_code }} {{ totals.approved|floatformat:2 }}</td>
+          <td class="text-end">{{ currency_code }} {{ totals.utilized|floatformat:2 }}</td>
+          <td class="text-end">{{ currency_code }} {{ totals.remaining|floatformat:2 }}</td>
+          <td>{{ totals.percent }}%</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<script>
+const labels = [{% for row in rows %}"{{ row.category.name|escapejs }}",{% endfor %}];
+const approved = [{% for row in rows %}{{ row.approved|default:0 }},{% endfor %}];
+const utilized = [{% for row in rows %}{{ row.utilized|default:0 }},{% endfor %}];
+const ctx = document.getElementById('reportChart');
+if (ctx && labels.length) {
+  new Chart(ctx, {
+    type: 'bar',
+    data: { labels: labels, datasets: [
+      { label: 'Approved Budget', data: approved, backgroundColor: '#2a78d6', borderRadius: 4, maxBarThickness: 32 },
+      { label: 'Utilized', data: utilized, backgroundColor: '#eb6834', borderRadius: 4, maxBarThickness: 32 },
+    ]},
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom', labels: { color: '#52514e' } },
+        tooltip: { callbacks: { label: (c) => `${c.dataset.label}: {{ currency_code }} ${c.parsed.y.toLocaleString()}` } } },
+      scales: { y: { beginAtZero: true, grid: { color: '#e1e0d9' }, ticks: { color: '#898781' } }, x: { grid: { display: false }, ticks: { color: '#898781' } } },
+    },
+  });
+}
+</script>
+{% endblock %}
